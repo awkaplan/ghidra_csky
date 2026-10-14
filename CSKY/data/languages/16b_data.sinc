@@ -61,8 +61,8 @@ with : i16_optype = 0b01 & i16_4op = 0b1010 {
         i16_r4_rz = i16_r4_rz & i16_r4_rx;
     }
     :andn i16_r4_rz, i16_r4_rx is i16_r4_sop = 0b01 & i16_r4_rz & i16_r4_rx {
-        local tmp:4 = i16_r4_rz & i16_r4_rx;
-        i16_r4_rz = ~tmp;
+        # rz = rz & ~rx (AND-NOT)
+        i16_r4_rz = i16_r4_rz & ~i16_r4_rx;
     }
 }
 

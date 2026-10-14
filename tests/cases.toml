@@ -1,0 +1,144 @@
+# Instruction regression cases for tests/run_tests.py.
+#
+#   hex  - the instruction word as `objdump -d` prints it (4 or 8 hex digits)
+#   asm  - expected Ghidra disassembly text (optional)
+#   in   - register values before the instruction runs (optional)
+#   out  - expected register values after one emulated step; "pc" checks the next PC (optional)
+#
+# Encodings come from the vendor toolchain: csky-elfabiv2-as -mcpu=ck803, then objdump -d.
+# Expected values come from the ISA semantics (cross-checked against T-Head's QEMU), never from
+# this module's own output.
+
+# --- andn: AND-NOT, not NAND --------------------------------------------------------------------
+
+[[case]]
+hex = "c4a42043"   # andn r3, r4, r5
+asm = "andn r3,r4,r5"
+in  = { r4 = 0xF0F0FFFF, r5 = 0x0000FF00 }
+out = { r3 = 0xF0F000FF }
+
+[[case]]
+hex = "68d1"       # andn r3, r4  (rz = rz & ~rx)
+asm = "andn r3,r4"
+in  = { r3 = 0xF0F0FFFF, r4 = 0x0000FF00 }
+out = { r3 = 0xF0F000FF }
+
+# --- movih: imm16 << 16 -------------------------------------------------------------------------
+
+[[case]]
+hex = "ea234000"   # movih r3, 0x4000
+asm = "movih r3,0x4000"
+out = { r3 = 0x40000000 }
+
+# --- zext / sext rz, rx, msb, lsb ---------------------------------------------------------------
+
+[[case]]
+hex = "c46c5543"   # zext r3, r12, 10, 3
+asm = "zext r3,r12,0xa,0x3"
+in  = { r12 = 0xDEADBEEF }
+out = { r3 = 0xDD }
+
+[[case]]
+hex = "c46c5943"   # sext r3, r12, 10, 3
+asm = "sext r3,r12,0xa,0x3"
+in  = { r12 = 0xDEADBEEF }
+out = { r3 = 0xFFFFFFDD }
+
+[[case]]
+hex = "c4ac54a3"   # zext r3, r12, 5, 5
+in  = { r12 = 0xDEADBEEF }
+out = { r3 = 0x1 }
+
+[[case]]
+hex = "c4ac58a3"   # sext r3, r12, 5, 5
+in  = { r12 = 0xDEADBEEF }
+out = { r3 = 0xFFFFFFFF }
+
+[[case]]
+hex = "c40c57e3"   # zext r3, r12, 31, 0  (full-width field)
+in  = { r12 = 0xDEADBEEF }
+out = { r3 = 0xDEADBEEF }
+
+[[case]]
+hex = "c40c5be3"   # sext r3, r12, 31, 0  (full-width field)
+in  = { r12 = 0xDEADBEEF }
+out = { r3 = 0xDEADBEEF }
+
+[[case]]
+hex = "c40c58e3"   # sext r3, r12, 7, 0
+in  = { r12 = 0xDEADBEEF }
+out = { r3 = 0xFFFFFFEF }
+
+# --- control registers --------------------------------------------------------------------------
+
+[[case]]
+hex = "c0006020"   # mfcr r0, cr<0, 0>
+asm = "mfcr r0,PSR"
+in  = { PSR = 0x80000140 }
+out = { r0 = 0x80000140 }
+
+[[case]]
+hex = "c01f6025"   # mfcr r5, cr<31, 0>
+asm = "mfcr r5,CR31"
+
+[[case]]
+hex = "c0016420"   # mtcr r1, cr<0, 0>
+asm = "mtcr r1,PSR"
+in  = { r1 = 0x140 }
+out = { PSR = 0x140 }
+
+[[case]]
+hex = "c0006424"   # mtcr r0, cr<4, 0>
+asm = "mtcr r0,EPC"
+in  = { r0 = 0x2000 }
+out = { EPC = 0x2000 }
+
+# --- psrclr / psrset: flag mask af,fe,ie,ee -> PSR bits 1,4,6,8 ---------------------------------
+
+[[case]]
+hex = "c0807020"   # psrclr ie
+asm = "psrclr ie"
+in  = { PSR = 0x140 }
+out = { PSR = 0x100 }
+
+[[case]]
+hex = "c1207020"   # psrclr ee, af
+asm = "psrclr ee, af"
+in  = { PSR = 0x152 }
+out = { PSR = 0x050 }
+
+[[case]]
+hex = "c1e07420"   # psrset ee, ie, fe, af
+asm = "psrset ee, ie, fe, af"
+in  = { PSR = 0 }
+out = { PSR = 0x152 }
+
+# --- exception return and power states ----------------------------------------------------------
+
+[[case]]
+hex = "c0004020"   # rte: PSR <- EPSR, PC <- EPC
+asm = "rte"
+in  = { EPSR = 0x80000140, EPC = 0x2000 }
+out = { PSR = 0x80000140, pc = 0x2000 }
+
+[[case]]
+hex = "c0004420"   # rfi: PSR <- FPSR, PC <- FPC
+asm = "rfi"
+in  = { FPSR = 0x80000040, FPC = 0x3000 }
+out = { PSR = 0x80000040, pc = 0x3000 }
+
+[[case]]
+hex = "c0004820"
+asm = "stop"
+
+[[case]]
+hex = "c0004c20"
+asm = "wait"
+
+[[case]]
+hex = "c0005020"
+asm = "doze"
+
+[[case]]
+hex = "c0000420"
+asm = "sync"

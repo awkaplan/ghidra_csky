@@ -38,6 +38,10 @@ define token ins32(32)
     i32_r_pcode = (21,25) #(5,9)
     i32_r_rz = (16,20) #(0,4)
 
+    # control-register index: in the rx slot for mfcr, in the rz slot for mtcr
+    i32_cr_rx = (0,4) #(16,20)
+    i32_cr_rz = (16,20) #(0,4)
+
     i32_bit_0003 = (16,19)
     i32_bit_0004 = (16,20)
     i32_bit_0404 = (20,20)
@@ -56,6 +60,8 @@ define token ins32(32)
 
 
 attach variables [i32_r_rz i32_r_rx i32_r_ry    i32_imm12_rz i32_imm12_rx i32_imm12_ry    i32_imm16_rz i32_imm16_rx    i32_imm18_rz] [r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 sp r15 r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 r30 r31];
+# cr<0..31, 0>, index order per binutils opcodes/csky-opc.h (csky_ctrl_regs)
+attach variables [i32_cr_rx i32_cr_rz] [PSR VBR EPSR FPSR EPC FPC SS0 SS1 SS2 SS3 SS4 GCR GSR CPID DCSR CWR CFR CCR CR18 CAPR PACR RID CR22 CR23 CR24 CR25 CR26 CR27 CR28 CR29 CR30 CR31];
 attach variables [i32_imm12_rz_A1] [r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 sp r15 r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 r30 r31 _];
 
 i32_j_offset: t is i32_j_sbit = 0b0 & i32_j_offset_sh & i32_j_offset_l [t = inst_start + (((i32_j_offset_sh<<16) + i32_j_offset_l)<<1);] { export *[ram]:4 t;}
@@ -82,6 +88,6 @@ with : i32_optype = 0b11 {
 @include "32b_branch.sinc"
 @include "32b_memory.sinc"
 #@include "32b_coproc.sinc"
-#@include "32b_priv.sinc"
+@include "32b_priv.sinc"
 @include "32b_special.sinc"
 }

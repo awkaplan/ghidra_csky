@@ -7,9 +7,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationResult;
-import ghidra.sleigh.grammar.SleighParser_SemanticParser.return_stmt_return;
 import ghidra.util.exception.NotFoundException;
-import jnr.ffi.Struct.int16_t;
 
 public class CSKY_ElfRelocationHandler extends ElfRelocationHandler {
 	@Override

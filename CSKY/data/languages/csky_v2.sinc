@@ -14,8 +14,14 @@ define register offset=0x00 size=4
 # Acc registers
 define register offset=0x100 size=4 [hi lo];
 
-# Control registers
+# Control registers (bank 0). The first row keeps its original offsets; the second adds the
+# remaining cr<n,0> slots so mfcr/mtcr can name every index (see 32b.sinc, i32_cr_*).
 define register offset=0x200 size=4 [PSR VBR EPSR FPSR EPC FPC GCR GSR CPID CCR CAPR PACR RID];
+define register offset=0x240 size=4
+    [SS0 SS1 SS2 SS3 SS4 DCSR CWR CFR CR18 CR22 CR23 CR24 CR25 CR26 CR27 CR28 CR29 CR30 CR31];
+# Architectural PSR bits: C=0, AF=1, FE=4, IE=6, EE=8, S=31. This model keeps the carry flag at
+# bit 31 instead (moving it to bit 0 makes Sleigh size it as a 1-byte varnode, which breaks the
+# 4-byte reads of psr_cf in addc/subc), so a whole-PSR value read by mfcr shows C in the S position.
 define bitrange psr_cf=PSR[31,1];
 
 # Alternative registers

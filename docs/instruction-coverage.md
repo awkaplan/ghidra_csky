@@ -1,3 +1,45 @@
+# C-SKY v2 (CK803S) instruction coverage
+
+Checklist of the C-SKY v2 instruction set for the Sleigh spec in this repository. Derived from the
+ISA manual checklist this file replaces (upstream `Instructions.md`), and regenerated from the
+`.sinc` constructors on 2026-10-14.
+
+## Legend
+
+- `[x]` implemented: a constructor exists in a built file with semantics. This includes constructors
+  that call a named pcodeop (`cpu_stop()`, `cpu_wait()`, `cpu_doze()`, `sync_barrier()`,
+  `trap_exception()`), which model the operation without a full p-code body.
+- `[~]` decodes only: the constructor exists but its body is only `stub();`, so it has no semantics.
+  No checklist entry is `[~]`; see the final section.
+- `[ ]` not implemented: no constructor for this mnemonic in any built file.
+
+## Built files
+
+`csky_v2.slaspec` includes:
+
+- `csky_v2.sinc` (registers)
+- `16b.sinc`, which includes `16b_data.sinc`, `16b_branch.sinc`, `16b_memory.sinc`
+- `32b.sinc`, which includes `32b_data.sinc`, `32b_branch.sinc`, `32b_memory.sinc`,
+  `32b_priv.sinc`, `32b_special.sinc`
+
+Not built: `float.sinc` (`#@include` in `csky_v2.slaspec`) and `32b_coproc.sinc` (`#@include` in
+`32b.sinc`).
+
+## Re-check
+
+Run from the repository root. Constructors are lines starting with `:mnemonic`. The 16-bit files
+use bare names with no `16` suffix, and the 32-bit files use bare names with no `32` suffix.
+
+```sh
+cd CSKY/data/languages
+# 16-bit mnemonics
+grep -hoE '^[[:space:]]*:[a-zA-Z][a-zA-Z0-9.]*' 16b.sinc 16b_data.sinc 16b_branch.sinc 16b_memory.sinc \
+  | tr -d ' \t:' | sort -u
+# 32-bit mnemonics
+grep -hoE '^[[:space:]]*:[a-zA-Z][a-zA-Z0-9.]*' 32b_data.sinc 32b_branch.sinc 32b_memory.sinc \
+  32b_priv.sinc 32b_special.sinc | tr -d ' \t:' | sort -u
+```
+
 ### 32 Bit
 #### Data operation
 ##### add-subtract
@@ -8,15 +50,15 @@
 - [x] SUBC32 Subtract with borrow unsigned
 - [x] SUBI32 Subtract immediate unsigned
 - [ ] RSUB32 Reverse subtract
-- [ ] IXH32 Index half-word
-- [ ] IXW32 Index word
-- [ ] IXD32 Index double word
+- [x] IXH32 Index half-word
+- [x] IXW32 Index word
+- [x] IXD32 Index double word
 - [x] INCF32 C=0 add immediate
 - [x] INCT32 C=1 add immediate
 - [x] DECF32 C=0 subtract immediate
 - [x] DECT32 C=1 subtract immediate
 - [ ] DECGT32 Set C bit when greater than zero in subtraction
-- [ ] DECLT32 Set C bit when smaller than zero in subtraction
+- [x] DECLT32 Set C bit when smaller than zero in subtraction
 - [ ] DECNE32 Set C bit when not equal to zero in subtraction
 ##### logical operation
 - [x] AND32 Bitwise AND
@@ -89,7 +131,7 @@
 - [ ] BREV32 Bit-reverse
 - [ ] REVB32 Byte-reverse
 - [ ] REVH32 Half-word byte-reverse 
-##### Mutliply-divide
+##### Multiply-divide
 - [x] MULU32 Multiply unsigned
 - [x] MULUA32 Multiply-accumulate unsigned
 - [x] MULUS32 Multiply-subtract unsigned
@@ -165,12 +207,12 @@
 - [ ] STM32 Store consecutive multiword
 - [x] PUSH32 Push
 - [x] POP32 Pop
-##### Exclusive access 
+##### Exclusive access
 - [ ] LDEX32.W Load word exclusive
 - [ ] STEX32.W Store word exclusive
-- [ ] LRS32.B Load byte sign
-- [ ] LRS32.H Load half-word sign
-- [ ] LRS32.W Load word sign
+- [x] LRS32.B Load byte sign
+- [x] LRS32.H Load half-word sign
+- [x] LRS32.W Load word sign
 - [ ] SRS32.B Store byte sign
 - [ ] SRS32.H Store half-word sign
 - [ ] SRS32.W Store word sign
@@ -188,22 +230,22 @@
 - [ ] CPOP32 Co-processor operation instruction
 #### Privileged instruction
 ##### control register operation
-- [ ] MFCR32 Read from control register
-- [ ] MTCR32 Write to control register
-- [ ] PSRSET32 Set PSR bit
-- [ ] PSRCLR32 Clear PSR bit
+- [x] MFCR32 Read from control register
+- [x] MTCR32 Write to control register
+- [x] PSRSET32 Set PSR bit
+- [x] PSRCLR32 Clear PSR bit
 ##### Low power consumption
-- [ ] WAIT32 Enter low power consumption wait mode
-- [ ] DOZE32 Enter low power consumption doze mode
-- [ ] STOP32 Enter low power consumption stop mode
+- [x] WAIT32 Enter low power consumption wait mode
+- [x] DOZE32 Enter low power consumption doze mode
+- [x] STOP32 Enter low power consumption stop mode
 ##### Abnormal return
-- [ ] RTE32 Return from abnormal and normal interrupt
-- [ ] RFI32 Return from fast interrupt
+- [x] RTE32 Return from abnormal and normal interrupt
+- [x] RFI32 Return from fast interrupt
 ##### Safe state
 - [ ] STRAP32 Enter safe state
 - [ ] SRTE32 Return from safe state
 #### Special Function
-- [ ] SYNC32 Synchronize CPU
+- [x] SYNC32 Synchronize CPU
 - [ ] BKPT32 Breakpoint instruction
 - [ ] SCE32 Set conditional execution
 - [ ] IDLY32 Ban interrupt identification
@@ -217,7 +259,7 @@
 
 ### 16 Bit
 #### Data Operation
-##### add- substract
+##### add-subtract
 - [x] ADDU16 Add unsigned
 - [x] ADDC16 Add with carry unsigned
 - [x] ADDI16 Add immediate unsigned
@@ -225,7 +267,7 @@
 - [x] SUBU16 Subtract unsigned
 - [x] SUBC16 Subtract with borrow unsigned
 - [x] SUBI16 Subtract immediate unsigned
-#####  logcial operation
+##### logical operation
 - [x] AND16 Bitwise AND
 - [x] ANDN16 Bitwise AND-NOT
 - [x] OR16 Bitwise OR
@@ -258,7 +300,7 @@
 - [x] BCLRI16 Bit clear immediate
 - [x] BSETI16 Bit set immediate
 - [x] BTSTI16 Bit test immediate
-##### extract and insert 
+##### extract and insert
 - [x] ZEXTB16 Extract byte and extend unsigned
 - [x] ZEXTH16 Extract half-word and extend unsigned
 - [x] SEXTB16 Extract byte and extend signed
@@ -291,16 +333,26 @@
 ##### multi-register access
 - [x] POP16 Pop
 - [x] PUSH16 Push
-##### Binary translated stack 
+##### Binary translated stack
 - [ ] BPUSH16.H Binary push of translated half-word
 - [ ] BPUSH16.W Binary push of translated word
 - [ ] BPOP16.H Binary pop of translated half-word
 - [ ] BPOP16.W Binary pop of translated word
-#####  interrupt nesting acceleration
+##### interrupt nesting acceleration
 - [ ] NIE Interrupt nesting enable
 - [ ] NIR Interrupt nesting return
 - [ ] IPUSH Interrupt push
 - [ ] IPOP Interrupt pop
 
 ### Float
-TBD
+
+Not built. `float.sinc` exists but its `@include` is commented out in `csky_v2.slaspec`.
+
+### Implemented but not listed above
+
+- 16-bit `bkpt` (`CSKY/data/languages/16b.sinc`). The body is only `stub();`, so it is `[~]`
+  (decodes only). It has no checklist entry in this file.
+- 32-bit: no built mnemonic is missing from the checklist.
+- Sub-constructors that are not instructions are not listed, for example `i32_ext` (`32b.sinc`) and
+  the `push16list`/`pop16list`/`push32list1`/`pop32list1` family (`16b_memory.sinc`,
+  `32b_memory.sinc`).

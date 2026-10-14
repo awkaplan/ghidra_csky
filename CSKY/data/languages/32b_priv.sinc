@@ -1,0 +1,68 @@
+# Privileged instructions: control-register access, PSR flag updates, exception return and
+# low-power modes.
+#
+# Encodings checked against the vendor assembler (csky-elfabiv2-as -mcpu=ck803 / objdump -d);
+# semantics follow T-Head's QEMU (target/csky: gen_mfcr_cpu, gen_mtcr_cpu, helper_psrclr,
+# helper_psrset, helper_rte, helper_rfi). The whole family has i32_op = 0b0000 and
+# i32_r_pcode = 0b00001; i32_r_sop selects the operation.
+
+define pcodeop cpu_stop;
+define pcodeop cpu_wait;
+define pcodeop cpu_doze;
+
+# psrclr/psrset operand: ry bit 0..3 = af, fe, ie, ee -> PSR bit 1, 4, 6, 8.
+psr_flags: "af"             is i32_bit_2125 = 0b00001 { export 0x002:4; }
+psr_flags: "fe"             is i32_bit_2125 = 0b00010 { export 0x010:4; }
+psr_flags: "fe, af"         is i32_bit_2125 = 0b00011 { export 0x012:4; }
+psr_flags: "ie"             is i32_bit_2125 = 0b00100 { export 0x040:4; }
+psr_flags: "ie, af"         is i32_bit_2125 = 0b00101 { export 0x042:4; }
+psr_flags: "ie, fe"         is i32_bit_2125 = 0b00110 { export 0x050:4; }
+psr_flags: "ie, fe, af"     is i32_bit_2125 = 0b00111 { export 0x052:4; }
+psr_flags: "ee"             is i32_bit_2125 = 0b01000 { export 0x100:4; }
+psr_flags: "ee, af"         is i32_bit_2125 = 0b01001 { export 0x102:4; }
+psr_flags: "ee, fe"         is i32_bit_2125 = 0b01010 { export 0x110:4; }
+psr_flags: "ee, fe, af"     is i32_bit_2125 = 0b01011 { export 0x112:4; }
+psr_flags: "ee, ie"         is i32_bit_2125 = 0b01100 { export 0x140:4; }
+psr_flags: "ee, ie, af"     is i32_bit_2125 = 0b01101 { export 0x142:4; }
+psr_flags: "ee, ie, fe"     is i32_bit_2125 = 0b01110 { export 0x150:4; }
+psr_flags: "ee, ie, fe, af" is i32_bit_2125 = 0b01111 { export 0x152:4; }
+
+with : i32_op = 0b0000 & i32_r_pcode = 0b00001 {
+    # mfcr rz, cr<rx, 0>      e.g. c0006020 = mfcr r0, cr<0, 0>
+    :mfcr i32_r_rz, i32_cr_rx is i32_r_sop = 0b011000 & i32_r_ry = 0b00000 & i32_r_rz & i32_cr_rx {
+        i32_r_rz = i32_cr_rx;
+    }
+
+    # mtcr rx, cr<rz, 0>      e.g. c0016420 = mtcr r1, cr<0, 0>
+    :mtcr i32_r_rx, i32_cr_rz is i32_r_sop = 0b011001 & i32_r_ry = 0b00000 & i32_r_rx & i32_cr_rz {
+        i32_cr_rz = i32_r_rx;
+    }
+
+    # psrclr ie               e.g. c0807020
+    :psrclr psr_flags is i32_r_sop = 0b011100 & i32_r_rx = 0b00000 & i32_r_rz = 0b00000 & psr_flags {
+        PSR = PSR & ~psr_flags;
+    }
+
+    # psrset ee, ie           e.g. c1807420
+    :psrset psr_flags is i32_r_sop = 0b011101 & i32_r_rx = 0b00000 & i32_r_rz = 0b00000 & psr_flags {
+        PSR = PSR | psr_flags;
+    }
+
+    with : i32_r_ry = 0b00000 & i32_r_rx = 0b00000 & i32_r_rz = 0b00000 {
+        # rte: PSR <- EPSR, PC <- EPC                         c0004020
+        :rte is i32_r_sop = 0b010000 {
+            PSR = EPSR;
+            return [EPC];
+        }
+
+        # rfi: PSR <- FPSR, PC <- FPC                         c0004420
+        :rfi is i32_r_sop = 0b010001 {
+            PSR = FPSR;
+            return [FPC];
+        }
+
+        :stop is i32_r_sop = 0b010010 { cpu_stop(); }    # c0004820
+        :wait is i32_r_sop = 0b010011 { cpu_wait(); }    # c0004c20
+        :doze is i32_r_sop = 0b010100 { cpu_doze(); }    # c0005020
+    }
+}
